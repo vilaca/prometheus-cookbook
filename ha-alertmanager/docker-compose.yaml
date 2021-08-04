@@ -53,6 +53,8 @@ services:
       - --query.max-concurrency=4
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=15m
+      - --storage.tsdb.max-block-duration=15m
+      - --storage.tsdb.min-block-duration=15m
     depends_on:
       - am-01
       - am-02
@@ -71,6 +73,8 @@ services:
       - --query.max-concurrency=4
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=15m
+      - --storage.tsdb.max-block-duration=15m
+      - --storage.tsdb.min-block-duration=15m
     depends_on:
       - am-01
       - am-02
