@@ -101,7 +101,7 @@ services:
     depends_on:
       - querier-01
     environment:
-      - GF_LOG_LEVEL=info
+      - GF_LOG_LEVEL=error
     image: "grafana/grafana:8.0.6"
     ports: 
       - "8301:3000"

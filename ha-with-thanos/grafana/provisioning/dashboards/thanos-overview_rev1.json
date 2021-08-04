@@ -45,7 +45,7 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": "ThanosQuery",
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -61,7 +61,7 @@
   "links": [],
   "panels": [
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -86,7 +86,7 @@
       "type": "text"
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {},
@@ -141,7 +141,7 @@
     },
     {
       "collapsed": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -158,7 +158,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -269,7 +269,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {},
@@ -396,7 +396,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -487,7 +487,7 @@
       }
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -503,7 +503,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -614,7 +614,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {},
@@ -741,7 +741,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -832,7 +832,7 @@
       }
     },
     {
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -848,7 +848,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -959,7 +959,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {},
@@ -1086,7 +1086,7 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "fieldConfig": {
         "defaults": {
           "custom": {}
@@ -1178,7 +1178,7 @@
     },
     {
       "collapsed": false,
-      "datasource": "${DS_PROMETHEUS}",
+      "datasource": "ThanosQuery",
       "gridPos": {
         "h": 1,
         "w": 24,

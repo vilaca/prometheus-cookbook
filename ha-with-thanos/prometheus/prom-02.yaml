@@ -13,8 +13,6 @@ alerting:
     static_configs:
     - targets:
       - am-01:9093
-      - am-02:9093
-      - am-03:9093
 scrape_configs:
 - job_name: alertmanager
   honor_timestamps: true
@@ -26,8 +24,6 @@ scrape_configs:
   static_configs:
   - targets:
     - am-01:9093
-    - am-02:9093
-    - am-03:9093
 - job_name: prometheus
   honor_timestamps: true
   scrape_interval: 5s
@@ -39,3 +35,21 @@ scrape_configs:
   - targets:
     - prom-01:9090
     - prom-02:9090
+- job_name: thanos
+  scrape_interval: 5s
+  static_configs:
+  - targets:
+    - prom-01-sidecar:10902
+    - prom-01-sidecar:10902
+    - querier-01:10902
+    - store-gateway-01:10902
+- job_name: minio
+  honor_timestamps: true
+  scrape_interval: 5s
+  scrape_timeout: 5s
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - minio-01:10902
