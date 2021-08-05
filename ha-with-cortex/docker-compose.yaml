@@ -1,0 +1,131 @@
+---
+version: "3.8"
+services:
+  am-01:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 9091:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+  am-02:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.peer=am-01:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    depends_on:
+      - am-01
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 9092:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+  am-03:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.peer=am-01:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    depends_on:
+      - am-01
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 9093:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+  prom-01:
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      - am-01
+      - am-02
+      - am-03
+      - cortex-01
+      - cortex-02
+    image: prom/prometheus:v2.28.1
+    ports:
+      - 9081:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-01-data:/prometheus
+  prom-02:
+    image: prom/prometheus:v2.28.1
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      - am-01
+      - am-02
+      - am-03
+      - cortex-01
+      - cortex-02
+    ports:
+      - 9082:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-02-data:/prometheus
+  grafana-01:
+    image: grafana/grafana:8.0.6
+    depends_on:
+      - cortex-01
+      - cortex-02
+    ports:
+      - 3000:3000
+    restart: always
+    volumes:
+      - grafana-01-data:/var/lib/grafana
+      - ./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml
+  consul-01:
+    image: consul:1.9.8
+#    environment:
+#      - CONSUL_BIND_INTERFACE=eth0
+    restart: always
+  cortex-01:
+    image: cortexproject/cortex:v1.10.0-rc.1
+    command:
+      - -config.file=/etc/single-process-config-blocks.yaml
+      - -consul.hostname=consul-01:8500
+      - -ring.store=consul
+    depends_on:
+      - consul-01
+    ports:
+      - 9071:9009
+    restart: always
+    volumes:
+      - ./cortex/single-process-config-blocks.yaml:/etc/single-process-config-blocks.yaml
+  cortex-02:
+    image: cortexproject/cortex:v1.10.0-rc.1
+    command:
+      - -config.file=/etc/single-process-config-blocks.yaml
+      - -consul.hostname=consul-01:8500
+      - -ring.store=consul
+    depends_on:
+      - consul-01
+    ports:
+      - 9072:9009
+    restart: always
+    volumes:
+      - ./cortex/single-process-config-blocks.yaml:/etc/single-process-config-blocks.yaml
+volumes:
+    prometheus-01-data: {}
+    prometheus-02-data: {}
+    grafana-01-data: {}
+
