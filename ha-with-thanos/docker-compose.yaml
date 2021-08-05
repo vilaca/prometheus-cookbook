@@ -34,12 +34,12 @@ services:
       - ./thanos/:/etc/thanos/
       - prometheus-01-storage:/prometheus
     command:
-      - 'sidecar'
-      - '--tsdb.path=/prometheus'
-      - '--prometheus.url=http://prom-01:9090'
-      - '--grpc-address=0.0.0.0:10091'
-      - '--http-address=0.0.0.0:10902'
-      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://prom-01:9090
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
       - --log.level=warn 
     depends_on:
       - prom-01
@@ -67,12 +67,12 @@ services:
       - ./thanos/:/etc/thanos/
       - prometheus-02-storage:/prometheus
     command:
-      - 'sidecar'
-      - '--tsdb.path=/prometheus'
-      - '--prometheus.url=http://prom-02:9090'
-      - '--grpc-address=0.0.0.0:10091'
-      - '--http-address=0.0.0.0:10902'
-      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://prom-02:9090
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
       - --log.level=warn 
     depends_on:
       - prom-02
@@ -81,13 +81,13 @@ services:
   querier-01:
     image: quay.io/thanos/thanos:v0.22.0
     command:
-      - 'query'
-      - '--grpc-address=0.0.0.0:10091'
-      - '--http-address=0.0.0.0:10902'
-      - '--query.replica-label=replica'
-      - '--store=prom-01-sidecar:10091'
-      - '--store=prom-02-sidecar:10091'
-      - '--store=store-gateway-01:10091'
+      - query
+#      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --query.replica-label=replica
+      - --store=prom-01-sidecar:10091
+      - --store=prom-02-sidecar:10091
+      - --store=store-gateway-01:10091
       - --log.level=warn 
     ports:
       - 8401:10902
@@ -102,14 +102,14 @@ services:
       - querier-01
     environment:
       - GF_LOG_LEVEL=error
-    image: "grafana/grafana:8.0.6"
+    image: grafana/grafana:8.0.6
     ports: 
-      - "8301:3000"
+      - 8301:3000
     restart: always
     volumes: 
-      - "grafana-01-storage:/var/lib/grafana"
-      - "./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml"
-      - "./grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/"
+      - grafana-01-storage:/var/lib/grafana
+      - ./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/
   minio-01:
     command: -c 'mkdir -p /data/demo-bucket-01 && /usr/bin/minio server --console-address=:9001 /data'
     environment:
@@ -126,11 +126,11 @@ services:
       - minio-01-storage:/data
   store-gateway-01:
     command:
-      - 'store'
-      - '--grpc-address=0.0.0.0:10091'
-      - '--http-address=0.0.0.0:10902'
-      - '--data-dir=/tmp/thanos/store'
-      - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+      - store
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --data-dir=/tmp/thanos/store
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
       - --log.level=warn 
     depends_on:
       - minio-01

@@ -3,7 +3,7 @@ global:
   scrape_timeout: 10s
   evaluation_interval: 1m
   external_labels:
-    replica: 'prom-02'
+    replica: prom-02
 alerting:
   alertmanagers:
   - follow_redirects: true
