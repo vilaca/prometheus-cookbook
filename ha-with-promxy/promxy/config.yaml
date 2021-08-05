@@ -1,0 +1,13 @@
+promxy:
+  server_groups:
+    - static_configs:
+        - targets:
+          - prom-01:9090
+      anti_affinity: 10s
+      scheme: http
+    - static_configs:
+        - targets:
+          - prom-02:9090
+      anti_affinity: 10s
+      scheme: http
+
