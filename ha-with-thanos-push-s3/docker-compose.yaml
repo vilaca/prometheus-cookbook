@@ -1,0 +1,172 @@
+--- 
+services: 
+  am-01: 
+    command: 
+      - "--cluster.listen-address=0.0.0.0:9094"
+      - "--cluster.pushpull-interval=5s"
+      - "--config.file=/etc/alertmanager/config.yaml"
+      - "--log.level=warn"
+      - "--storage.path=/alertmanager"
+    image: "prom/alertmanager:v0.22.2"
+    ports: 
+      - "9091:9093"
+    restart: always
+    volumes: 
+      - "./alertmanager/config.yaml:/etc/alertmanager/config.yaml"
+  am-02: 
+    command: 
+      - "--cluster.listen-address=0.0.0.0:9094"
+      - "--cluster.peer=am-01:9094"
+      - "--cluster.pushpull-interval=5s"
+      - "--config.file=/etc/alertmanager/config.yaml"
+      - "--log.level=warn"
+      - "--storage.path=/alertmanager"
+    depends_on: 
+      - am-01
+    image: "prom/alertmanager:v0.22.2"
+    ports: 
+      - "9092:9093"
+    restart: always
+    volumes: 
+      - "./alertmanager/config.yaml:/etc/alertmanager/config.yaml"
+  am-03: 
+    command: 
+      - "--cluster.listen-address=0.0.0.0:9094"
+      - "--cluster.peer=am-01:9094"
+      - "--cluster.pushpull-interval=5s"
+      - "--config.file=/etc/alertmanager/config.yaml"
+      - "--log.level=warn"
+      - "--storage.path=/alertmanager"
+    depends_on: 
+      - am-01
+    image: "prom/alertmanager:v0.22.2"
+    ports: 
+      - "9093:9093"
+    restart: always
+    volumes: 
+      - "./alertmanager/config.yaml:/etc/alertmanager/config.yaml"
+  prom-01: 
+    command: 
+      - "--config.file=/etc/prometheus/config.yaml"
+      - "--log.level=warn"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on: 
+      - am-01
+      - am-02
+      - am-03
+      - thanos-01
+      - thanos-02
+    image: "prom/prometheus:v2.28.1"
+    ports: 
+      - "9081:9090"
+    restart: always
+    volumes: 
+      - "./prometheus/:/etc/prometheus/"
+      - "prometheus-01-storage:/prometheus"
+  prom-02: 
+    command: 
+      - "--config.file=/etc/prometheus/config.yaml"
+      - "--log.level=warn"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on: 
+      - am-01
+      - am-02
+      - am-03
+      - thanos-01
+      - thanos-02
+    image: "prom/prometheus:v2.28.1"
+    ports: 
+      - "9082:9090"
+    restart: always
+    volumes: 
+      - "./prometheus/:/etc/prometheus/"
+      - "prometheus-02-storage:/prometheus"
+  grafana-01:
+    depends_on:
+      - query-01
+    environment:
+      - GF_LOG_LEVEL=warn
+    image: "grafana/grafana:8.0.6"
+    ports: 
+      - "3000:3000"
+    restart: always
+    volumes: 
+      - "grafana-01-storage:/var/lib/grafana"
+      - "./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml"
+  query-01: 
+    command: 
+      - "query"
+      - "--log.level=warn"
+      - "--log.format=logfmt"
+      - "--query.replica-label=replica"
+      - "--store=thanos-01:10901"
+      - "--store=thanos-02:10901"
+    depends_on:
+      - thanos-01
+      - thanos-02
+    image: "quay.io/thanos/thanos:v0.22.0"
+    ports: 
+      - "10902:10902"
+    restart: always
+  thanos-01: 
+    command: >
+      receive
+      --log.level=warn
+      --log.format=logfmt
+      --remote-write.address=0.0.0.0:19291
+      --tsdb.retention=24h
+      --tsdb.path=/data
+      --tsdb.min-block-duration=2h
+      --tsdb.max-block-duration=32h
+      --receive.replication-factor=2
+      --receive.hashrings-file=/hashring.json
+      --label=replica='"thanos-01"'
+      --receive.local-endpoint="thanos-01:10901"
+      --objstore.config-file=/bucket_config.yaml
+    image: "quay.io/thanos/thanos:v0.22.0"
+    volumes: 
+      - "./thanos/bucket_config.yaml:/bucket_config.yaml"
+      - "./thanos/hashring.json:/hashring.json"
+      - "thanos-01-storage:/data"
+    restart: always
+  thanos-02: 
+    command: >
+      receive
+      --log.level=warn
+      --log.format=logfmt
+      --remote-write.address=0.0.0.0:19291
+      --tsdb.retention=24h
+      --tsdb.path=/data
+      --tsdb.min-block-duration=2h
+      --tsdb.max-block-duration=32h
+      --receive.replication-factor=2
+      --receive.hashrings-file=/hashring.json
+      --label=replica='"thanos-02"'
+      --receive.local-endpoint="thanos-02:10901"
+      --objstore.config-file=/bucket_config.yaml
+    image: "quay.io/thanos/thanos:v0.22.0"
+    restart: always
+    volumes: 
+      - "./thanos/bucket_config.yaml:/bucket_config.yaml"
+      - "./thanos/hashring.json:/hashring.json"
+      - "thanos-02-storage:/data"
+  minio:
+    image: minio/minio:RELEASE.2020-05-01T22-19-14Z
+    volumes:
+        - minio-01-storage:/data
+    entrypoint: sh
+    command: -c 'mkdir -p /data/demo-bucket && /usr/bin/minio server /data'
+    environment:
+        - MINIO_ACCESS_KEY=smth
+        - MINIO_SECRET_KEY=Need8Chars
+        - MINIO_PROMETHEUS_AUTH_TYPE=public
+    ports:
+        - 9000:9000
+volumes: 
+  grafana-01-storage: {}
+  minio-01-storage: {}
+  prometheus-01-storage: {}
+  prometheus-02-storage: {}
+  thanos-01-storage: {}
+  thanos-02-storage: {}
+version: "3.8"
