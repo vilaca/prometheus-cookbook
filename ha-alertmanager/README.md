@@ -5,7 +5,7 @@
 
 Both prometheus instances are configured to scrape themselves and the alertmanagers. They share the same configuration files.
 
-In [prometheus/alerts.yaml](prometheus/alerts.yaml) an alert is configured to alert when a prometheus or alertmanager instance goes down. It can be tested by stopping on or more instances.
+In [prometheus/alerts.yaml](prometheus/alerts.yaml) an alert is configured to alert when a prometheus or alertmanager instance goes down. It can be tested by stopping on or more instances. [alertmanager/config.yaml] requires additional configuration so that an alert can be sent.
 
 To validate if the cluster is running create a *Silence* and all Alertmanager instances should see it. Tweak the value of *--cluster.pushpull-interval=5s* for Alertmanager instances in *docker-compose.yaml* as required.
 
