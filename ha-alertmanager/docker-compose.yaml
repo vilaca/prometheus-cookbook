@@ -60,8 +60,6 @@ services:
       - am-02
       - am-03
     image: prom/prometheus:v2.28.1
-    ports:
-      - 9094:9090
     restart: always
     volumes:
       - ./prometheus/:/etc/prometheus/
@@ -80,8 +78,6 @@ services:
       - am-02
       - am-03
     image: prom/prometheus:v2.28.1
-    ports:
-      - 9095:9090
     restart: always
     volumes:
       - ./prometheus/:/etc/prometheus/
