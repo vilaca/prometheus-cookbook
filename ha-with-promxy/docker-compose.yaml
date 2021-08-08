@@ -46,7 +46,6 @@ services:
     restart: always
     volumes:
       - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
-
   prom-01:
     command:
       - --config.file=/etc/prometheus/config.yaml

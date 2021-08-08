@@ -10,4 +10,3 @@ promxy:
           - prom-02:9090
       anti_affinity: 10s
       scheme: http
-
