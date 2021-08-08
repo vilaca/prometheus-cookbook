@@ -1,6 +1,8 @@
 
 # High Availability Prometheus with Promxy
 
+## Summary
+
 | Service      |              |                        |
 |:-------------|--------------|------------------------|
 | am-01        | Alertmanager | http://localhost:8101/ |
@@ -10,7 +12,7 @@
 | prom-02      | Prometheus   | http://localhost:8202/ |
 | promxy-01    | Promxy       | http://localhost:8801/ |
 
-## Summary
+## Description
 
 Prometheus is a single process service not capable of running in a cluster by itself.
 
