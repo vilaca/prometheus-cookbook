@@ -3,14 +3,14 @@
 
 ## Summary
 
-| Service      |              |                        |
-|:-------------|--------------|------------------------|
-| am-01        | Alertmanager | http://localhost:8101/ |
-| am-02        | Alertmanager | http://localhost:8102/ |
-| am-03        | Alertmanager | http://localhost:8103/ |
-| prom-01      | Prometheus   | http://localhost:8201/ |
-| prom-02      | Prometheus   | http://localhost:8202/ |
-| promxy-01    | Promxy       | http://localhost:8801/ |
+| Service      |              |                       |
+|:-------------|--------------|-----------------------|
+| am-01        | Alertmanager | http://localhost:8101 |
+| am-02        | Alertmanager | http://localhost:8102 |
+| am-03        | Alertmanager | http://localhost:8103 |
+| prom-01      | Prometheus   | http://localhost:8201 |
+| prom-02      | Prometheus   | http://localhost:8202 |
+| promxy-01    | Promxy       | http://localhost:8801 |
 
 ## Description
 

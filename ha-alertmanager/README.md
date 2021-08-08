@@ -3,13 +3,13 @@
 
 ## Summary
 
-| Service      |         |                        |
-|--------------|:--------|------------------------|
-| Alertmanager | am-01   | http://localhost:9091/ |
-| Alertmanager | am-02   | http://localhost:9092/ |
-| Alertmanager | am-03   | http://localhost:9093/ |
-| Prometheus   | prom-01 |                        |
-| Prometheus   | prom-02 |                        |
+| Service      |         |                       |
+|:-------------|---------|-----------------------|
+| Alertmanager | am-01   | http://localhost:9091 |
+| Alertmanager | am-02   | http://localhost:9092 |
+| Alertmanager | am-03   | http://localhost:9093 |
+| Prometheus   | prom-01 |                       |
+| Prometheus   | prom-02 |                       |
 
 Prometheus UI ports are not exposed intentionally as this example is intended only for alerting. Grafana in not present for the same reason.
 
