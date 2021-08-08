@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: 'a unique provider name'
+    folder: 'catalog-01'
+    # <string> provider type. Default to 'file'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: false
+    options:
+      path: /etc/grafana/provisioning/dashboards/
+      foldersFromFilesStructure: true
