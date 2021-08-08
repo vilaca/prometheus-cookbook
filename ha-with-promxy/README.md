@@ -2,7 +2,7 @@
 # High Availability Prometheus with Promxy
 
 | Service      |              |                        |
-|--------------|:-------------|------------------------|
+|--------------|--------------|------------------------|
 | am-01        | Alertmanager | http://localhost:8101/ |
 | am-02        | Alertmanager | http://localhost:8102/ |
 | am-03        | Alertmanager | http://localhost:8103/ |
