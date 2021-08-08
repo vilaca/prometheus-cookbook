@@ -1,5 +1,5 @@
 
-# High Availability Alertmanager
+# High Availability (alerting) with Alertmanager
 
 ## Summary
 
