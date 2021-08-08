@@ -1,4 +1,4 @@
 # Prometheus Cookbook
 
--  [High availability Alertmanager](ha-alertmanager/)
--  [High availability with Promxy](ha-with-promxy/)
+-  [High Availability (alerting) with Alertmanager](ha-alertmanager/)
+-  [High Availability with Promxy](ha-with-promxy/)
