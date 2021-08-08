@@ -11,7 +11,7 @@
 | Prometheus   | prom-01 |                        |
 | Prometheus   | prom-02 |                        |
 
-Prometheus UI ports are not exposed intentionally as this example is intended only for alerting.
+Prometheus UI ports are not exposed intentionally as this example is intended only for alerting. Grafana in not present for the same reason.
 
 ## Description
 
@@ -25,7 +25,8 @@ An alert is set in [prometheus/alerts.yaml](prometheus/alerts.yaml) to be trigge
 
 Alertmanager will deduplicate the alerts from both prometheus and only one of the Alertmanagers will send the alert.
 
-This setup will work well for alerting purposes unless you have a very large number of rules to be evaluated. If/When that happens you can try to vertically scale Prometheus by adding more ram and optimize the alert expressions (hint: use a linter) with recording rules. If that fails split your rules set across more than one instance.
-
 Slack or other supported messaging can be set to receive alerts at [alertmanager/config.yaml](alertmanager/config.yaml).
 
+## Conclusion
+
+This setup will work well for alerting purposes unless you have a very large number of rules to be evaluated. If/When that happens you can try to vertically scale Prometheus by adding more ram and optimize the alert expressions (hint: use a linter) with recording rules. If that fails split your rules set across more than one instance.
