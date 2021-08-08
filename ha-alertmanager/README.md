@@ -29,4 +29,4 @@ Slack or other supported messaging can be set to receive alerts at [alertmanager
 
 ## Conclusion
 
-This setup will work well for alerting purposes unless you have a very large number of rules to be evaluated. If/When that happens you can try to vertically scale Prometheus by adding more ram and optimize the alert expressions (hint: use a linter) with recording rules. If that fails split your rules set across more than one instance.
+This setup will work well for alerting purposes unless you have a very large number of rules to be evaluated. If/When that happens you can try to vertically scale Prometheus by adding more ram and optimize the alert expressions (hint: use a linter) with recording rules.
