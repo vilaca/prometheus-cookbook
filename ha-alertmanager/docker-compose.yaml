@@ -52,7 +52,7 @@ services:
       - --log.level=warn
       - --query.max-concurrency=4
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=15m
+      - --storage.tsdb.retention.time=1m
       - --storage.tsdb.max-block-duration=15m
       - --storage.tsdb.min-block-duration=15m
     depends_on:
@@ -70,7 +70,7 @@ services:
       - --log.level=warn
       - --query.max-concurrency=4
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=15m
+      - --storage.tsdb.retention.time=1m
       - --storage.tsdb.max-block-duration=15m
       - --storage.tsdb.min-block-duration=15m
     depends_on:
