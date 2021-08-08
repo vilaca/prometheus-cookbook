@@ -1,19 +1,7 @@
 
 # High Availability Alertmanager
 
-3x AlertManager instances and 2x Prometheus instances to evaluate and send alerts.
-
-Both Prometheus instances are configured to scrape themselves and the Alertmanagers. They share the same configuration files.
-
-An alert is set in [prometheus/alerts.yaml](prometheus/alerts.yaml) to be triggered when a prometheus or alertmanager instance goes down. To test stop one or more instances. 
-
-To validate if the cluster is running create a *Silence* and all Alertmanager instances should see it. Tweak the value of *--cluster.pushpull-interval=5s* for Alertmanager instances in *docker-compose.yaml* as required.
-
-Alertmanager will deduplicate the alerts from both prometheus and only one of the Alertmanagers will send the alert.
-
-This setup will work well for alerting purposes unless you have a very large number of rules to be evaluated. If/When that happens you can try to vertically scale Prometheus by adding more ram and optimize the alert expressions (hint: use a linter) with recording rules. If that fails split your rules set across more than one instance.
-
-Slack or other supported messaging can be set to receive alerts at [alertmanager/config.yaml](alertmanager/config.yaml).
+## Summary
 
 | Service      |         |                        |
 |--------------|:--------|------------------------|
@@ -24,3 +12,20 @@ Slack or other supported messaging can be set to receive alerts at [alertmanager
 | Prometheus   | prom-02 |                        |
 
 Prometheus UI ports are not exposed intentionally as this example is intended only for alerting.
+
+## Description
+
+This example is composed of a cluster with 3x AlertManager instances and 2x Prometheus with duplicated configurations to evaluate and send alerts reliably.
+
+To validate if the Alermanager cluster is running create a *Silence* and all Alertmanager instances will received it. Tweak the value of *--cluster.pushpull-interval=5s* for Alertmanager instances in *docker-compose.yaml* as required.
+
+Both Prometheus instances are configured to scrape the Alertmanagers and Prometheus hosts and have a duplicated setup (the same file is used as configuration for both Prometheus).
+
+An alert is set in [prometheus/alerts.yaml](prometheus/alerts.yaml) to be triggered when a prometheus or alertmanager instance goes down. To test stop one or more instances. 
+
+Alertmanager will deduplicate the alerts from both prometheus and only one of the Alertmanagers will send the alert.
+
+This setup will work well for alerting purposes unless you have a very large number of rules to be evaluated. If/When that happens you can try to vertically scale Prometheus by adding more ram and optimize the alert expressions (hint: use a linter) with recording rules. If that fails split your rules set across more than one instance.
+
+Slack or other supported messaging can be set to receive alerts at [alertmanager/config.yaml](alertmanager/config.yaml).
+
