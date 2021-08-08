@@ -1,4 +1,3 @@
-# prometheus-examples
-Prometheus alerting, monitoring and observability.
+# Prometheus Cookbook
 
--  [High availability with Promxy](ha-with-promxy/)
+-  [High Availability with Promxy](ha-with-promxy/)
