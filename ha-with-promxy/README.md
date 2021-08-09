@@ -16,10 +16,8 @@
 
 Prometheus is a single process service not capable of running in a cluster by itself.
 
-[Promxy](https://github.com/jacksontj/promxy) merges data from duplicate Prometheus hosts and provides a single datasource for Grafana.
+[Promxy](https://github.com/jacksontj/promxy) queries all Prometheus hosts in a server group and merges the responses. Gaps can still exist if not one of the duplicated Prometheus instances has samples for a period of time.
 
-Promxy works by querying all Prometheus in a server group, merging the responses into a single response for Grafana. Gaps can still exist if not one of the duplicated Prometheus instances has samples for a time period. 
-
-In this example, both Prometheus instances are configured to scrape themselves and the Alertmanagers. They share the same configuration files meaning they're _duplicated_.
+In this example, both Prometheus instances scrape themselves and the Alertmanagers. They share the same configuration files meaning they're _duplicated_.
 
 The [configuration file for Promxy](promxy/config.yaml) is very simple, Promxy only needs to what server groups are.
