@@ -1,43 +1,85 @@
 --- 
 version: "3.8"
-services: 
-  store-01: 
-    command: "-c 'mkdir -p /data/demo-bucket && /usr/bin/minio server /data'"
-    entrypoint: sh
-    environment: 
-      - MINIO_PROMETHEUS_AUTH_TYPE=public
-    image: "minio/minio:RELEASE.2020-05-01T22-19-14Z"
-    ports: 
-      - "9000:9000"
-    volumes: 
-      - "store-01-persistence:/data"
-  node-exporter: 
-    command: 
-      - "--path.procfs=/host/proc"
-      - "--path.sysfs=/host/sys"
-      - "--collector.filesystem.ignored-mount-points"
-      - ^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)
-    image: "prom/node-exporter:v1.2.2"
-    ports: 
-      - "9100:9100"
+services:
+  prom-01:
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --query.max-concurrency=4
+    depends_on:
+      - rcv-01
+    image: prom/prometheus:v2.28.1
     restart: always
-    volumes: 
-      - "/proc:/host/proc:ro"
-      - "/sys:/host/sys:ro"
-      - "/:/rootfs:ro"
-  gw-01: 
-    command: 
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+  rcv-01:
+    command: >
+      receive
+      --receive.local-endpoint 127.0.0.1:10907
+      --remote-write.address=0.0.0.0:10908
+      --http-address=0.0.0.0:10909
+      --tsdb.path=/tmp/thanos/store
+      --objstore.config-file=/etc/thanos/bucket_config.yaml
+      --log.level=warn
+      --receive.replication-factor=1
+      --label=receive_replica='"rep1"'
+      --receive.hashrings-file=/etc/thanos/hashring.json
+    depends_on:
+      - gw-01
+    image: quay.io/thanos/thanos:v0.22.0
+    ports:
+      - 8201:10907
+    restart: always
+    volumes:
+      - ./thanos/:/etc/thanos/
+  # rcv-02:
+  #   command: >
+  #     receive
+  #     --grpc-address=0.0.0.0:10907
+  #     --receive.local-endpoint 127.0.0.1:10907
+  #     --remote-write.address=0.0.0.0:10908
+  #     --http-address=0.0.0.0:10909
+  #     --tsdb.path=/tmp/thanos/store
+  #     --objstore.config-file=/etc/thanos/bucket_config.yaml
+  #     --log.level=warn
+  #     --receive.replication-factor=2
+  #     --label=receive_replica='"rep1"'
+  #     --receive.hashrings-file=/etc/thanos/hashring.json
+  #   depends_on:
+  #     - gw-01
+  #   image: quay.io/thanos/thanos:v0.22.0
+  #   ports:
+  #     - 8202:10909
+  #   restart: always
+  #   volumes:
+  #     - ./thanos/:/etc/thanos/ 
+  gw-01:
+    command:
       - store
-      - "--grpc-address=0.0.0.0:10091"
-      - "--http-address=0.0.0.0:10902"
-      - "--data-dir=/tmp/thanos/store"
-      - "--objstore.config-file=/etc/thanos/bucket_config.yaml"
-    depends_on: 
-      - store-01
-    image: "quay.io/thanos/thanos:v0.22.0"
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --data-dir=/tmp/thanos/store
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
+      - --log.level=warn 
+    depends_on:
+      - minio-01
+    image: quay.io/thanos/thanos:v0.22.0
+    ports:
+      - 8502:10902
     restart: always
-    volumes: 
-      - "./thanos/:/etc/thanos/"
+    volumes:
+      - ./thanos/:/etc/thanos/
+  minio-01:
+    command: -c 'mkdir -p /data/demo-bucket-01 && /usr/bin/minio server --console-address=:9001 /data'
+    environment:
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+    entrypoint: sh
+    image: minio/minio:RELEASE.2021-07-30T00-02-00Z
+    ports:
+      - 9000:9000
+      - 9001:9001
+    restart: always
+    volumes:
+      - minio-01-persistence:/data
 volumes:
-  grafana-01-persistence: {}
-  store-01-persistence: {}
+  minio-01-persistence: {}

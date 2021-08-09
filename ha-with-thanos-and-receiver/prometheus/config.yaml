@@ -1,0 +1,8 @@
+global:
+  scrape_interval:     10s
+remote_write:
+  - url: "http://rcv-01:10908/api/v1/receive"
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['127.0.0.1:9090']

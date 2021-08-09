@@ -1,0 +1,7 @@
+[
+    {
+        "hashring": "default",
+        "endpoints": ["rcv-01:10901"],
+        "tenants": []
+    }
+]
