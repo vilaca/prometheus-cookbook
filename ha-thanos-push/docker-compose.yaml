@@ -124,7 +124,6 @@ services:
             - ./thanos/:/etc/thanos/
         command:
             - 'compact'
-            - '--log.level=debug'
             - '--data-dir=/data'
             - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
             - '--wait'
