@@ -2,9 +2,9 @@
 version: '3.1'
 
 volumes:
-    prometheus1_data: {}
-    prometheus2_data: {}
-    grafana_data: {}
+    prom-01-storage: {}
+    prom-02-storage: {}
+    grafana-storage: {}
     minio-01-persistence: {}
 
 services:
@@ -12,7 +12,7 @@ services:
         image: prom/prometheus:v2.29.1
         volumes:
             - ./prometheus/:/etc/prometheus/
-            - prometheus1_data:/prometheus
+            - prom-01-storage:/prometheus
         command:
             - '--config.file=/etc/prometheus/prometheus1.yaml'
             - '--storage.tsdb.path=/prometheus'
@@ -36,7 +36,7 @@ services:
         image: prom/prometheus:v2.29.1
         volumes:
             - ./prometheus/:/etc/prometheus/
-            - prometheus2_data:/prometheus
+            - prom-02-storage:/prometheus
         command:
             - '--config.file=/etc/prometheus/prometheus2.yaml'
             - '--storage.tsdb.path=/prometheus'
@@ -191,7 +191,7 @@ services:
         ports:
             - 3000:3000
         volumes:
-            - grafana_data:/var/lib/grafana
+            - grafana-storage:/var/lib/grafana
             - ./grafana/provisioning/:/etc/grafana/provisioning/
         env_file:
             - ./grafana/config.monitoring
