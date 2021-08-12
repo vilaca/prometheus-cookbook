@@ -52,6 +52,27 @@ services:
             - cadvisor
         restart: always
 
+    rcv-01:
+        command: >
+            receive
+            --receive.local-endpoint 127.0.0.1:10907
+            --remote-write.address=0.0.0.0:10908
+            --http-address=0.0.0.0:10909
+            --tsdb.path=/tmp/thanos/store
+            --objstore.config-file=/etc/thanos/bucket_config.yaml
+            --log.level=warn
+            --receive.replication-factor=1
+            --label=receive_replica='"rep1"'
+            --receive.hashrings-file=/etc/thanos/hashring.json
+        depends_on:
+            - gw-01
+        image: quay.io/thanos/thanos:v0.22.0
+        ports:
+            - 8201:10907
+        restart: always
+        volumes:
+            - ./thanos/:/etc/thanos/
+
     thanos-query-frontend:
         image: quay.io/thanos/thanos:v0.22.0
         command:
