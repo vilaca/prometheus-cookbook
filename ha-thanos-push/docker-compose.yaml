@@ -1,0 +1,169 @@
+---
+version: '3.1'
+
+volumes:
+    prometheus1_data: {}
+    prometheus2_data: {}
+    grafana_data: {}
+    minio-01-persistence: {}
+
+services:
+    prometheus-1:
+        image: prom/prometheus:v2.29.1
+        volumes:
+            - ./prometheus/:/etc/prometheus/
+            - prometheus1_data:/prometheus
+        command:
+            - '--config.file=/etc/prometheus/prometheus1.yaml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.max-block-duration=30m'
+            - '--storage.tsdb.min-block-duration=30m'
+            - '--web.enable-lifecycle'
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+        ports:
+            - 9081:9090
+        links:
+            - cadvisor:cadvisor
+            - alertmanager:alertmanager
+        depends_on:
+            - cadvisor
+        restart: always
+
+    prometheus-2:
+        image: prom/prometheus:v2.29.1
+        volumes:
+            - ./prometheus/:/etc/prometheus/
+            - prometheus2_data:/prometheus
+        command:
+            - '--config.file=/etc/prometheus/prometheus2.yaml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.max-block-duration=30m'
+            - '--storage.tsdb.min-block-duration=30m'
+            - '--web.enable-lifecycle'
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+        ports:
+            - 9082:9090
+        links:
+            - cadvisor:cadvisor
+            - alertmanager:alertmanager
+        depends_on:
+            - cadvisor
+        restart: always
+
+    thanos-query-frontend:
+        image: quay.io/thanos/thanos:v0.22.0
+        command:
+            - 'query-frontend'
+            - '--http-address=0.0.0.0:10901'
+            - '--query-frontend.downstream-url=http://thanos-querier:10902'
+        ports:
+            - 10901:10901
+        depends_on:
+            - thanos-querier
+        restart: always
+
+    thanos-querier:
+        image: quay.io/thanos/thanos:v0.22.0
+        command:
+            - 'query'
+            - '--grpc-address=0.0.0.0:10091'
+            - '--http-address=0.0.0.0:10902'
+            - '--query.replica-label=replica'
+            - '--store=thanos-store-gateway:10091'
+        ports:
+            - 10902:10902
+        restart: always
+
+    thanos-store-gateway:
+        image: quay.io/thanos/thanos:v0.22.0
+        volumes:
+            - ./thanos/:/etc/thanos/
+        command:
+            - 'store'
+            - '--grpc-address=0.0.0.0:10091'
+            - '--http-address=0.0.0.0:10902'
+            - '--data-dir=/tmp/thanos/store'
+            - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+        depends_on:
+            - minio-01
+        restart: always
+
+    thanos-compactor:
+        image: quay.io/thanos/thanos:v0.22.0
+        volumes:
+            - ./thanos/:/etc/thanos/
+        command:
+            - 'compact'
+            - '--log.level=debug'
+            - '--data-dir=/data'
+            - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+            - '--wait'
+        depends_on:
+            - minio-01
+        restart: always
+
+    minio-01:
+        command: -c 'mkdir -p /data/demo-bucket-01 && /usr/bin/minio server --console-address=:9001 /data'
+        environment:
+        - MINIO_PROMETHEUS_AUTH_TYPE=public
+        entrypoint: sh
+        image: minio/minio:RELEASE.2021-07-30T00-02-00Z
+        ports:
+        - 9000:9000
+        - 9001:9001
+        restart: always
+        volumes:
+        - minio-01-persistence:/data
+
+    node-exporter:
+        image: prom/node-exporter:v1.2.2
+        volumes:
+            - /proc:/host/proc:ro
+            - /sys:/host/sys:ro
+            - /:/rootfs:ro
+        command:
+            - '--path.procfs=/host/proc'
+            - '--path.sysfs=/host/sys'
+            - --collector.filesystem.ignored-mount-points
+            - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+        ports:
+            - 9100:9100
+        restart: always
+
+    alertmanager:
+        image: prom/alertmanager:v0.22.2
+        ports:
+            - 9093:9093
+        volumes:
+            - ./alertmanager/:/etc/alertmanager/
+        restart: always
+        command:
+            - '--config.file=/etc/alertmanager/config.yaml'
+            - '--storage.path=/alertmanager'
+
+    cadvisor:
+        image: gcr.io/google_containers/cadvisor:v0.36.0
+        volumes:
+            - /:/rootfs:ro
+            - /var/run:/var/run:rw
+            - /sys:/sys:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+        ports:
+            - 8080:8080
+        restart: always
+
+    grafana:
+        image: grafana/grafana:8.1.1
+        depends_on:
+            - prometheus-1
+            - prometheus-2
+        ports:
+            - 3000:3000
+        volumes:
+            - grafana_data:/var/lib/grafana
+            - ./grafana/provisioning/:/etc/grafana/provisioning/
+        env_file:
+            - ./grafana/config.monitoring
+        restart: always
