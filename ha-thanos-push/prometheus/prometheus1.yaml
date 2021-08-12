@@ -10,12 +10,6 @@ global:
     cluster: 'chicago'
     replica: 'r1'
 
-# Load and evaluate rules in this file every 'evaluation_interval' seconds.
-rule_files:
-  - 'alert.rules'
-  # - "first.rules"
-  # - "second.rules"
-
 # alert
 alerting:
   alertmanagers:
@@ -38,18 +32,6 @@ scrape_configs:
 
     static_configs:
       - targets: ['prometheus-1:9090', 'prometheus-2:9090']
-
-  - job_name: 'thanos'
-
-    # Override the global default and
-    # scrape targets from this job every 5 seconds.
-    scrape_interval: 5s
-
-    static_configs:
-      - targets:
-          - 'thanos-querier:10902'
-          - 'thanos-store-gateway:10902'
-          - 'thanos-compactor:10902'
 
   - job_name: 'minio'
 
@@ -79,3 +61,6 @@ scrape_configs:
 
     static_configs:
       - targets: ['node-exporter:9100']
+
+remote_write:
+- url: http://rcv-01:10908/api/v1/receive

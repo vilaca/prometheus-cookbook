@@ -21,6 +21,7 @@ services:
             - '--web.enable-lifecycle'
             - '--web.console.libraries=/usr/share/prometheus/console_libraries'
             - '--web.console.templates=/usr/share/prometheus/consoles'
+            - --log.level=warn
         ports:
             - 9081:9090
         links:
@@ -28,6 +29,7 @@ services:
             - alertmanager:alertmanager
         depends_on:
             - cadvisor
+            - rcv-01
         restart: always
 
     prometheus-2:
@@ -43,6 +45,7 @@ services:
             - '--web.enable-lifecycle'
             - '--web.console.libraries=/usr/share/prometheus/console_libraries'
             - '--web.console.templates=/usr/share/prometheus/consoles'
+            - --log.level=warn
         ports:
             - 9082:9090
         links:
@@ -55,17 +58,18 @@ services:
     rcv-01:
         command: >
             receive
-            --receive.local-endpoint 127.0.0.1:10907
-            --remote-write.address=0.0.0.0:10908
-            --http-address=0.0.0.0:10909
             --tsdb.path=/tmp/thanos/store
-            --objstore.config-file=/etc/thanos/bucket_config.yaml
-            --log.level=warn
+            --grpc-address 0.0.0.0:10907
+            --http-address=0.0.0.0:10909
             --receive.replication-factor=1
             --label=receive_replica='"rep1"'
+            --receive.local-endpoint 127.0.0.1:10907
             --receive.hashrings-file=/etc/thanos/hashring.json
+            --remote-write.address=0.0.0.0:10908
+            --objstore.config-file=/etc/thanos/bucket_config.yaml
+            --log.level=warn
         depends_on:
-            - gw-01
+            - thanos-store-gateway
         image: quay.io/thanos/thanos:v0.22.0
         ports:
             - 8201:10907
@@ -79,6 +83,7 @@ services:
             - 'query-frontend'
             - '--http-address=0.0.0.0:10901'
             - '--query-frontend.downstream-url=http://thanos-querier:10902'
+            - --log.level=warn
         ports:
             - 10901:10901
         depends_on:
@@ -93,6 +98,7 @@ services:
             - '--http-address=0.0.0.0:10902'
             - '--query.replica-label=replica'
             - '--store=thanos-store-gateway:10091'
+            - --log.level=warn
         ports:
             - 10902:10902
         restart: always
@@ -107,6 +113,7 @@ services:
             - '--http-address=0.0.0.0:10902'
             - '--data-dir=/tmp/thanos/store'
             - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
+            - --log.level=warn
         depends_on:
             - minio-01
         restart: always
@@ -121,6 +128,7 @@ services:
             - '--data-dir=/data'
             - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
             - '--wait'
+            - --log.level=warn
         depends_on:
             - minio-01
         restart: always
