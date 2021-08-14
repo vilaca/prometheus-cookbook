@@ -8,6 +8,7 @@ services:
       - "8404:8404"
       - "9009:9009"
     consul:
+      command: agent -dev -client 0.0.0.0 -log-level=error
       image: consul
       ports:
       - "8500:8500"
