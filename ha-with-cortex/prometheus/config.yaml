@@ -3,6 +3,21 @@ remote_write:
 - url: http://cortex-01:9009/api/v1/push
 
 scrape_configs:
+- job_name: alertmanager
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - am-01:9093
+- job_name: cortex
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - cortex-01:9009
+    - cortex-02:9009
 - job_name: prometheus
   metrics_path: /metrics
   scheme: http
@@ -10,3 +25,4 @@ scrape_configs:
   static_configs:
   - targets:
     - prom-01:9090
+    - prom-02:9090

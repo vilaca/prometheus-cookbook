@@ -1,30 +1,58 @@
 ---
 version: "3.8"
 services:
+  am-01:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    image: prom/alertmanager:v0.22.2
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
   prom-01:
     command:
       - --config.file=/etc/prometheus/config.yaml
       - --log.level=warn
       - --query.max-concurrency=4
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=1m
+      - --storage.tsdb.retention.time=30m
       - --storage.tsdb.max-block-duration=15m
       - --storage.tsdb.min-block-duration=15m
     depends_on:
       - am-01
-      - am-02
-      - am-03
     image: prom/prometheus:v2.29.1
     restart: always
     volumes:
       - ./prometheus/:/etc/prometheus/
       - prometheus-01-data:/prometheus
+  prom-02:
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --query.max-concurrency=4
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=30m
+      - --storage.tsdb.max-block-duration=15m
+      - --storage.tsdb.min-block-duration=15m
+    depends_on:
+      - am-01
+    image: prom/prometheus:v2.29.1
+    ports:
+          - 9091:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-02-data:/prometheus
   cortex-01:
       image: cortexproject/cortex:v1.10.0
       command: 
       - -config.file=/etc/single-process-config.yaml 
       - -ring.store=consul  
       - -consul.hostname=consul:8500
+      - --log.level=warn
       ports:
       - "9001:9009"
       volumes:
@@ -35,17 +63,20 @@ services:
       - -config.file=/etc/single-process-config.yaml 
       - -ring.store=consul  
       - -consul.hostname=consul:8500
+      - --log.level=warn
       ports:
       - "9002:9009"
       volumes:
       - "./cortex/single-process-config.yaml:/etc/single-process-config.yaml"
   consul:
       image: consul
-#      environment:
-#        - CONSUL_BIND_INTERFACE=eth0
+      #command:
+      #- --log-level=warn
+      environment:
+        - CONSUL_BIND_INTERFACE=eth0
   grafana:
-#      environment:
-#      - GF_LOG_LEVEL=error
+      environment:
+      - GF_LOG_LEVEL=error
       image: grafana/grafana
       ports:
       - "3000:3000"
@@ -58,5 +89,6 @@ services:
 
 volumes:
   prometheus-01-data: {}
+  prometheus-02-data: {}
   grafana-01-data: {}
 
