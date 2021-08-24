@@ -1,0 +1,12 @@
+
+remote_write:
+- url: http://cortex-01:9009/api/v1/push
+
+scrape_configs:
+- job_name: prometheus
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - prom-01:9090

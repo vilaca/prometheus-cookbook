@@ -1,0 +1,62 @@
+---
+version: "3.8"
+services:
+  prom-01:
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --query.max-concurrency=4
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=1m
+      - --storage.tsdb.max-block-duration=15m
+      - --storage.tsdb.min-block-duration=15m
+    depends_on:
+      - am-01
+      - am-02
+      - am-03
+    image: prom/prometheus:v2.29.1
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-01-data:/prometheus
+  cortex-01:
+      image: cortexproject/cortex:v1.10.0
+      command: 
+      - -config.file=/etc/single-process-config.yaml 
+      - -ring.store=consul  
+      - -consul.hostname=consul:8500
+      ports:
+      - "9001:9009"
+      volumes:
+      - "./cortex/single-process-config.yaml:/etc/single-process-config.yaml"
+  cortex-02:
+      image: cortexproject/cortex:v1.10.0
+      command: 
+      - -config.file=/etc/single-process-config.yaml 
+      - -ring.store=consul  
+      - -consul.hostname=consul:8500
+      ports:
+      - "9002:9009"
+      volumes:
+      - "./cortex/single-process-config.yaml:/etc/single-process-config.yaml"
+  consul:
+      image: consul
+#      environment:
+#        - CONSUL_BIND_INTERFACE=eth0
+  grafana:
+#      environment:
+#      - GF_LOG_LEVEL=error
+      image: grafana/grafana
+      ports:
+      - "3000:3000"
+      depends_on:
+      - cortex-01
+      volumes:
+      - "grafana-01-data:/var/lib/grafana"
+      - "./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml"
+      - "./grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/"
+
+volumes:
+  prometheus-01-data: {}
+  grafana-01-data: {}
+
