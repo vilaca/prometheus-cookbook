@@ -2,10 +2,12 @@
 version: '3.1'
 
 volumes:
+    grafana-storage: {}
     prom-01-storage: {}
     prom-02-storage: {}
-    grafana-storage: {}
-    minio-01-persistence: {}
+    rcv-01-storage: {}
+    rcv-02-storage: {}
+    rcv-03-storage: {}
 
 services:
     prometheus-1:
@@ -25,11 +27,11 @@ services:
         ports:
             - 9081:9090
         links:
-            - cadvisor:cadvisor
             - alertmanager:alertmanager
+            - rcv-01:rcv-01
+            - rcv-02:rcv-02
         depends_on:
             - cadvisor
-            - rcv-01
         restart: always
 
     prometheus-2:
@@ -49,7 +51,6 @@ services:
         ports:
             - 9082:9090
         links:
-            - cadvisor:cadvisor
             - alertmanager:alertmanager
         depends_on:
             - cadvisor
@@ -59,114 +60,81 @@ services:
     rcv-01:
         command: >
             receive
-            --tsdb.path=/tmp/thanos/store
-            --grpc-address 0.0.0.0:10907
-            --http-address=0.0.0.0:10909
-            --receive.replication-factor=1
-            --label=receive_replica='"rep1"'
-            --receive.local-endpoint 127.0.0.1:10907
-            --receive.hashrings-file=/etc/thanos/hashring.json
-            --remote-write.address=0.0.0.0:10908
-            --objstore.config-file=/etc/thanos/bucket_config.yaml
             --log.level=warn
-        depends_on:
-            - thanos-store-gateway
+            --log.format=logfmt
+            --remote-write.address=0.0.0.0:19291
+            --tsdb.retention=24h
+            --tsdb.path=/data
+            --tsdb.min-block-duration=2h
+            --tsdb.max-block-duration=32h
+            --receive.replication-factor=2
+            --receive.hashrings-file=/hashring.json
+            --label=replica='"rcv-01"'
+            --receive.local-endpoint="rcv-01:10901"
         image: quay.io/thanos/thanos:v0.22.0
         ports:
             - 8201:10907
         restart: always
         volumes:
-            - ./thanos/:/etc/thanos/
+            - ./thanos/hashring.json:/hashring.json
+            - rcv-01-storage:/data
 
     rcv-02:
         command: >
             receive
-            --tsdb.path=/tmp/thanos/store
-            --grpc-address 0.0.0.0:10907
-            --http-address=0.0.0.0:10909
-            --receive.replication-factor=1
-            --label=receive_replica='"rep2"'
-            --receive.local-endpoint 127.0.0.1:10907
-            --receive.hashrings-file=/etc/thanos/hashring.json
-            --remote-write.address=0.0.0.0:10908
-            --objstore.config-file=/etc/thanos/bucket_config.yaml
             --log.level=warn
-        depends_on:
-            - thanos-store-gateway
+            --log.format=logfmt
+            --remote-write.address=0.0.0.0:19291
+            --tsdb.retention=24h
+            --tsdb.path=/data
+            --tsdb.min-block-duration=2h
+            --tsdb.max-block-duration=32h
+            --receive.replication-factor=2
+            --receive.hashrings-file=/hashring.json
+            --label=replica='"rcv-02"'
+            --receive.local-endpoint="rcv-02:10901"
         image: quay.io/thanos/thanos:v0.22.0
         ports:
             - 8202:10907
         restart: always
         volumes:
-            - ./thanos/:/etc/thanos/
+            - ./thanos/hashring.json:/hashring.json
+            - rcv-02-storage:/data
 
-    thanos-query-frontend:
+    rcv-03:
+        command: >
+            receive
+            --log.level=warn
+            --log.format=logfmt
+            --remote-write.address=0.0.0.0:19291
+            --tsdb.retention=24h
+            --tsdb.path=/data
+            --tsdb.min-block-duration=2h
+            --tsdb.max-block-duration=32h
+            --receive.replication-factor=2
+            --receive.hashrings-file=/hashring.json
+            --label=replica='"rcv-03"'
+            --receive.local-endpoint="rcv-03:10901"
         image: quay.io/thanos/thanos:v0.22.0
-        command:
-            - 'query-frontend'
-            - '--http-address=0.0.0.0:10901'
-            - '--query-frontend.downstream-url=http://thanos-querier:10902'
-            - --log.level=warn
         ports:
-            - 10901:10901
-        depends_on:
-            - thanos-querier
+            - 8203:10902
         restart: always
+        volumes:
+            - ./thanos/hashring.json:/hashring.json
+            - rcv-03-storage:/data
 
     thanos-querier:
         image: quay.io/thanos/thanos:v0.22.0
-        command:
-            - 'query'
-            - '--grpc-address=0.0.0.0:10091'
-            - '--http-address=0.0.0.0:10902'
-            - '--query.replica-label=replica'
-            - '--store=thanos-store-gateway:10091'
-            - --log.level=warn
+        command: >
+            'query'
+            --query.replica-label=replica
+            --store=rcv-01:10901
+            --store=rcv-02:10901
+            --store=rcv-03:10901
+            --log.level=warn
         ports:
             - 10902:10902
         restart: always
-
-    thanos-store-gateway:
-        image: quay.io/thanos/thanos:v0.22.0
-        volumes:
-            - ./thanos/:/etc/thanos/
-        command:
-            - 'store'
-            - '--grpc-address=0.0.0.0:10091'
-            - '--http-address=0.0.0.0:10902'
-            - '--data-dir=/tmp/thanos/store'
-            - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
-            - --log.level=warn
-        depends_on:
-            - minio-01
-        restart: always
-
-    thanos-compactor:
-        image: quay.io/thanos/thanos:v0.22.0
-        volumes:
-            - ./thanos/:/etc/thanos/
-        command:
-            - 'compact'
-            - '--data-dir=/data'
-            - '--objstore.config-file=/etc/thanos/bucket_config.yaml'
-            - '--wait'
-            - --log.level=warn
-        depends_on:
-            - minio-01
-        restart: always
-
-    minio-01:
-        command: -c 'mkdir -p /data/demo-bucket-01 && /usr/bin/minio server --console-address=:9001 /data'
-        environment:
-        - MINIO_PROMETHEUS_AUTH_TYPE=public
-        entrypoint: sh
-        image: minio/minio:RELEASE.2021-07-30T00-02-00Z
-        ports:
-        - 9000:9000
-        - 9001:9001
-        restart: always
-        volumes:
-        - minio-01-persistence:/data
 
     node-exporter:
         image: prom/node-exporter:v1.2.2
@@ -194,22 +162,10 @@ services:
             - '--config.file=/etc/alertmanager/config.yaml'
             - '--storage.path=/alertmanager'
 
-    cadvisor:
-        image: gcr.io/google_containers/cadvisor:v0.36.0
-        volumes:
-            - /:/rootfs:ro
-            - /var/run:/var/run:rw
-            - /sys:/sys:ro
-            - /var/lib/docker/:/var/lib/docker:ro
-        ports:
-            - 8080:8080
-        restart: always
-
     grafana:
         image: grafana/grafana:8.1.1
         depends_on:
-            - prometheus-1
-            - prometheus-2
+            - thanos-querier
         ports:
             - 3000:3000
         volumes:
