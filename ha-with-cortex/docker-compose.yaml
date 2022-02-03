@@ -23,7 +23,7 @@ services:
       - --storage.tsdb.min-block-duration=15m
     depends_on:
       - am-01
-    image: prom/prometheus:v2.33.0
+    image: prom/prometheus:v2.33.1
     restart: always
     volumes:
       - ./prometheus/:/etc/prometheus/
@@ -39,7 +39,7 @@ services:
       - --storage.tsdb.min-block-duration=15m
     depends_on:
       - am-01
-    image: prom/prometheus:v2.33.0
+    image: prom/prometheus:v2.33.1
     ports:
           - 9091:9090
     restart: always
