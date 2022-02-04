@@ -5,9 +5,9 @@ metadata:
   labels:
     app: promxy
 spec:
+  type: NodePort
   ports:
-  - port: 8082
-    name: web-ui
-  clusterIP: None
+    - port: 8082
+      targetPort: 8082
   selector:
     app: promxy

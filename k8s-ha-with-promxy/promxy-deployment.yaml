@@ -22,7 +22,7 @@ spec:
         - --log-level=warn
         - --web.enable-lifecycle
         ports:
-        - containerPort: 9083
+        - containerPort: 8082
         volumeMounts:
         - name: promxy-config
           mountPath: /cmd/promxy/      

@@ -10,6 +10,11 @@ data:
         source: promxy
     promxy:
       server_groups:
+        #- kubernetes_sd_configs:
+        #  - role: pod
+        #   namespaces:
+        #     names:
+        #     - default
         - static_configs:
             - targets:
               - localhost:9090
