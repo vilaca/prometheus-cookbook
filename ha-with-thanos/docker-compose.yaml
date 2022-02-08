@@ -1,0 +1,147 @@
+---
+version: "3.8"
+services:
+  am-01:
+    command:
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 8101:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+  prom-01:
+    command:
+      - --config.file=/etc/prometheus/prom-01.yaml
+      - --log.level=warn
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.min-block-duration=2h
+      - --storage.tsdb.max-block-duration=2h
+    depends_on:
+      - am-01
+    image: prom/prometheus:v2.28.1
+    ports:
+      - 8201:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-01-storage:/prometheus
+  prom-01-sidecar:
+    image: quay.io/thanos/thanos:v0.22.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheus-01-storage:/prometheus
+    command:
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://prom-01:9090
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
+      - --log.level=warn 
+    depends_on:
+      - prom-01
+      - minio-01
+    restart: always
+  prom-02:
+    image: prom/prometheus:v2.28.1
+    command:
+      - --config.file=/etc/prometheus/prom-02.yaml
+      - --log.level=warn
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.min-block-duration=2h
+      - --storage.tsdb.max-block-duration=2h
+    depends_on:
+      - am-01
+    ports:
+      - 8202:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-02-storage:/prometheus
+  prom-02-sidecar:
+    image: quay.io/thanos/thanos:v0.22.0
+    volumes:
+      - ./thanos/:/etc/thanos/
+      - prometheus-02-storage:/prometheus
+    command:
+      - sidecar
+      - --tsdb.path=/prometheus
+      - --prometheus.url=http://prom-02:9090
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
+      - --log.level=warn 
+    depends_on:
+      - prom-02
+      - minio-01
+    restart: always
+  querier-01:
+    image: quay.io/thanos/thanos:v0.22.0
+    command:
+      - query
+#      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --query.replica-label=replica
+      - --store=prom-01-sidecar:10091
+      - --store=prom-02-sidecar:10091
+      - --store=store-gateway-01:10091
+      - --log.level=warn 
+    ports:
+      - 8401:10902
+    depends_on:
+      - prom-01-sidecar
+      - prom-02-sidecar
+      - store-gateway-01
+      - minio-01
+    restart: always
+  grafana-01:
+    depends_on:
+      - querier-01
+    environment:
+      - GF_LOG_LEVEL=error
+    image: grafana/grafana:8.0.6
+    ports: 
+      - 8301:3000
+    restart: always
+    volumes: 
+      - grafana-01-storage:/var/lib/grafana
+      - ./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ./grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/
+  minio-01:
+    command: -c 'mkdir -p /data/demo-bucket-01 && /usr/bin/minio server --console-address=:9001 /data'
+    environment:
+      - MINIO_ROOT_USER=smth
+      - MINIO_ROOT_PASSWORD=Need8Chars
+      - MINIO_PROMETHEUS_AUTH_TYPE=public
+    entrypoint: sh
+    image: minio/minio:RELEASE.2021-07-30T00-02-00Z
+    ports:
+      - 9000:9000
+      - 9001:9001
+    restart: always
+    volumes:
+      - minio-01-storage:/data
+  store-gateway-01:
+    command:
+      - store
+      - --grpc-address=0.0.0.0:10091
+      - --http-address=0.0.0.0:10902
+      - --data-dir=/tmp/thanos/store
+      - --objstore.config-file=/etc/thanos/bucket_config.yaml
+      - --log.level=warn 
+    depends_on:
+      - minio-01
+    image: quay.io/thanos/thanos:v0.22.0
+    ports:
+      - 8501:10902
+    restart: always
+    volumes:
+      - ./thanos/:/etc/thanos/
+volumes:
+  grafana-01-storage: {}
+  minio-01-storage: {}
+  prometheus-01-storage: {}
+  prometheus-02-storage: {}
