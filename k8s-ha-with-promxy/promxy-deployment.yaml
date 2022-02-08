@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promxy
+  labels:
+    app: promxy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: promxy
+  template:
+    metadata:
+      labels:
+        app: promxy
+    spec:
+      containers:
+      - name: promxy
+        image: quay.io/jacksontj/promxy:v0.0.75
+        args:
+        - --config=/cmd/promxy/config.yaml
+        - --log-level=debug
+        - --web.enable-lifecycle
+        ports:
+        - name: web
+          containerPort: 8082
+          protocol: TCP
+        volumeMounts:
+        - name: promxy-config
+          mountPath: /cmd/promxy/      
+      volumes:
+      - name: promxy-config
+        configMap:
+          name: promxy-config
