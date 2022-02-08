@@ -5,9 +5,11 @@ metadata:
   labels:
     app: promxy
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
-    - port: 8082
-      targetPort: 8082
+    - port: 8080
+      targetPort: web
+      protocol: TCP
+      name: lb-promxy
   selector:
     app: promxy

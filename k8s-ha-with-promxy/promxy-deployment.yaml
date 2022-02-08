@@ -19,10 +19,12 @@ spec:
         image: quay.io/jacksontj/promxy:v0.0.75
         args:
         - --config=/cmd/promxy/config.yaml
-        - --log-level=warn
+        - --log-level=debug
         - --web.enable-lifecycle
         ports:
-        - containerPort: 8082
+        - name: web
+          containerPort: 8082
+          protocol: TCP
         volumeMounts:
         - name: promxy-config
           mountPath: /cmd/promxy/      
