@@ -1,0 +1,28 @@
+apiVersion: 1
+
+datasources:
+  - name: prom-01
+    type: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prom-01:9090
+    isDefault: false
+    version: 1
+    editable: true
+
+  - name: prom-02
+    type: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prom-02:9090
+    isDefault: false
+    version: 1
+    editable: true
+
+  - name: ThanosQuery
+    type: prometheus
+    access: proxy
+    url: http://query-01:10902
+    isDefault: true
+    version: 1
+    editable: true
