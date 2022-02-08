@@ -1,0 +1,176 @@
+---
+version: '3.1'
+
+volumes:
+    grafana-storage: {}
+    prom-01-storage: {}
+    prom-02-storage: {}
+    rcv-01-storage: {}
+    rcv-02-storage: {}
+    rcv-03-storage: {}
+
+services:
+    prometheus-1:
+        image: prom/prometheus:v2.29.1
+        volumes:
+            - ./prometheus/:/etc/prometheus/
+            - prom-01-storage:/prometheus
+        command:
+            - '--config.file=/etc/prometheus/prometheus1.yaml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.max-block-duration=30m'
+            - '--storage.tsdb.min-block-duration=30m'
+            - '--web.enable-lifecycle'
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+            - --log.level=warn
+        ports:
+            - 9081:9090
+        links:
+            - alertmanager:alertmanager
+            - rcv-01:rcv-01
+            - rcv-02:rcv-02
+        depends_on:
+            - cadvisor
+        restart: always
+
+    prometheus-2:
+        image: prom/prometheus:v2.29.1
+        volumes:
+            - ./prometheus/:/etc/prometheus/
+            - prom-02-storage:/prometheus
+        command:
+            - '--config.file=/etc/prometheus/prometheus2.yaml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.max-block-duration=30m'
+            - '--storage.tsdb.min-block-duration=30m'
+            - '--web.enable-lifecycle'
+            - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+            - '--web.console.templates=/usr/share/prometheus/consoles'
+            - --log.level=warn
+        ports:
+            - 9082:9090
+        links:
+            - alertmanager:alertmanager
+        depends_on:
+            - cadvisor
+            - rcv-01
+        restart: always
+
+    rcv-01:
+        command: >
+            receive
+            --log.level=warn
+            --log.format=logfmt
+            --remote-write.address=0.0.0.0:19291
+            --tsdb.retention=24h
+            --tsdb.path=/data
+            --tsdb.min-block-duration=2h
+            --tsdb.max-block-duration=32h
+            --receive.replication-factor=2
+            --receive.hashrings-file=/hashring.json
+            --label=replica='"rcv-01"'
+            --receive.local-endpoint="rcv-01:10901"
+        image: quay.io/thanos/thanos:v0.22.0
+        ports:
+            - 8201:10907
+        restart: always
+        volumes:
+            - ./thanos/hashring.json:/hashring.json
+            - rcv-01-storage:/data
+
+    rcv-02:
+        command: >
+            receive
+            --log.level=warn
+            --log.format=logfmt
+            --remote-write.address=0.0.0.0:19291
+            --tsdb.retention=24h
+            --tsdb.path=/data
+            --tsdb.min-block-duration=2h
+            --tsdb.max-block-duration=32h
+            --receive.replication-factor=2
+            --receive.hashrings-file=/hashring.json
+            --label=replica='"rcv-02"'
+            --receive.local-endpoint="rcv-02:10901"
+        image: quay.io/thanos/thanos:v0.22.0
+        ports:
+            - 8202:10907
+        restart: always
+        volumes:
+            - ./thanos/hashring.json:/hashring.json
+            - rcv-02-storage:/data
+
+    rcv-03:
+        command: >
+            receive
+            --log.level=warn
+            --log.format=logfmt
+            --remote-write.address=0.0.0.0:19291
+            --tsdb.retention=24h
+            --tsdb.path=/data
+            --tsdb.min-block-duration=2h
+            --tsdb.max-block-duration=32h
+            --receive.replication-factor=2
+            --receive.hashrings-file=/hashring.json
+            --label=replica='"rcv-03"'
+            --receive.local-endpoint="rcv-03:10901"
+        image: quay.io/thanos/thanos:v0.22.0
+        ports:
+            - 8203:10902
+        restart: always
+        volumes:
+            - ./thanos/hashring.json:/hashring.json
+            - rcv-03-storage:/data
+
+    thanos-querier:
+        image: quay.io/thanos/thanos:v0.22.0
+        command: >
+            'query'
+            --query.replica-label=replica
+            --store=rcv-01:10901
+            --store=rcv-02:10901
+            --store=rcv-03:10901
+            --log.level=warn
+        ports:
+            - 10902:10902
+        restart: always
+
+    node-exporter:
+        image: prom/node-exporter:v1.2.2
+        volumes:
+            - /proc:/host/proc:ro
+            - /sys:/host/sys:ro
+            - /:/rootfs:ro
+        command:
+            - '--path.procfs=/host/proc'
+            - '--path.sysfs=/host/sys'
+            - --collector.filesystem.ignored-mount-points
+            - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+        ports:
+            - 9100:9100
+        restart: always
+
+    alertmanager:
+        image: prom/alertmanager:v0.22.2
+        ports:
+            - 9093:9093
+        volumes:
+            - ./alertmanager/:/etc/alertmanager/
+        restart: always
+        command:
+            - '--config.file=/etc/alertmanager/config.yaml'
+            - '--storage.path=/alertmanager'
+
+    grafana:
+        image: grafana/grafana:8.1.1
+        depends_on:
+            - thanos-querier
+        ports:
+            - 3000:3000
+        volumes:
+            - grafana-storage:/var/lib/grafana
+            - ./grafana/provisioning/:/etc/grafana/provisioning/
+        env_file:
+            - ./grafana/config.monitoring
+        restart: always
