@@ -1,0 +1,112 @@
+---
+version: "3.8"
+services:
+  am-01:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 8101:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+  am-02:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.peer=am-01:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    depends_on:
+      - am-01
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 8102:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+  am-03:
+    command:
+      - --cluster.listen-address=0.0.0.0:9094
+      - --cluster.peer=am-01:9094
+      - --cluster.pushpull-interval=5s
+      - --config.file=/etc/alertmanager/config.yaml
+      - --log.level=warn
+      - --storage.path=/alertmanager
+    depends_on:
+      - am-01
+    image: prom/alertmanager:v0.22.2
+    ports:
+      - 8103:9093
+    restart: always
+    volumes:
+      - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
+
+  prom-01:
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      - am-01
+      - am-02
+      - am-03
+    image: prom/prometheus:v2.28.1
+    ports:
+      - 8201:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-01-storage:/prometheus
+  prom-02:
+    image: prom/prometheus:v2.28.1
+    command:
+      - --config.file=/etc/prometheus/config.yaml
+      - --log.level=warn
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      - am-01
+      - am-02
+      - am-03
+    ports:
+      - 8202:9090
+    restart: always
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-02-storage:/prometheus
+  promxy-01:
+    command: 
+      - --access-log-destination=none
+      - --config=/etc/promxy/config.yaml
+      - --log-level=warn
+    depends_on:
+      - prom-01
+      - prom-02
+    image: quay.io/jacksontj/promxy:v0.0.71
+    ports:
+      - 8801:8082
+    restart: always
+    volumes:
+      - ./promxy/config.yaml:/etc/promxy/config.yaml
+  grafana-01:
+    depends_on:
+      - promxy-01
+    environment:
+      - GF_LOG_LEVEL=error
+    image: "grafana/grafana:8.0.6"
+    ports: 
+      - "8301:3000"
+    restart: always
+    volumes: 
+      - "grafana-01-storage:/var/lib/grafana"
+      - "./grafana/provisioning/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yml"
+      - "./grafana/provisioning/dashboards/:/etc/grafana/provisioning/dashboards/"
+volumes:
+  grafana-01-storage: {}
+  prometheus-01-storage: {}
+  prometheus-02-storage: {}
