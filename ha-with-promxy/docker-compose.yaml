@@ -97,7 +97,7 @@ services:
       - promxy-01
     environment:
       - GF_LOG_LEVEL=error
-    image: "grafana/grafana:8.3.4"
+    image: "grafana/grafana:8.5.2"
     ports: 
       - "8301:3000"
     restart: always
