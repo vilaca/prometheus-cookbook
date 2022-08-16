@@ -59,7 +59,7 @@ services:
       - am-01
       - am-02
       - am-03
-    image: prom/prometheus:v2.36.1
+    image: prom/prometheus:v2.37.0
     restart: always
     volumes:
       - ./prometheus/:/etc/prometheus/
@@ -77,7 +77,7 @@ services:
       - am-01
       - am-02
       - am-03
-    image: prom/prometheus:v2.36.1
+    image: prom/prometheus:v2.37.0
     restart: always
     volumes:
       - ./prometheus/:/etc/prometheus/
