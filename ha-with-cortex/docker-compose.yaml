@@ -47,7 +47,7 @@ services:
       - ./prometheus/:/etc/prometheus/
       - prometheus-02-data:/prometheus
   cortex-01:
-      image: cortexproject/cortex:v1.11.0
+      image: cortexproject/cortex:v1.13.0
       command: 
       - -config.file=/etc/single-process-config.yaml 
       - -ring.store=consul  
@@ -58,7 +58,7 @@ services:
       volumes:
       - "./cortex/single-process-config.yaml:/etc/single-process-config.yaml"
   cortex-02:
-      image: cortexproject/cortex:v1.11.0
+      image: cortexproject/cortex:v1.13.0
       command: 
       - -config.file=/etc/single-process-config.yaml 
       - -ring.store=consul  
