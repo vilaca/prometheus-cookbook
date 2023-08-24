@@ -8,7 +8,7 @@ services:
       - --config.file=/etc/alertmanager/config.yaml
       - --log.level=warn
       - --storage.path=/alertmanager
-    image: prom/alertmanager:v0.24.0
+    image: prom/alertmanager:v0.26.0
     ports:
       - 8101:9093
     restart: always
@@ -24,7 +24,7 @@ services:
       - --storage.path=/alertmanager
     depends_on:
       - am-01
-    image: prom/alertmanager:v0.24.0
+    image: prom/alertmanager:v0.26.0
     ports:
       - 8102:9093
     restart: always
@@ -40,7 +40,7 @@ services:
       - --storage.path=/alertmanager
     depends_on:
       - am-01
-    image: prom/alertmanager:v0.24.0
+    image: prom/alertmanager:v0.26.0
     ports:
       - 8103:9093
     restart: always

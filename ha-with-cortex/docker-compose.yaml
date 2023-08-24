@@ -8,7 +8,7 @@ services:
       - --config.file=/etc/alertmanager/config.yaml
       - --log.level=warn
       - --storage.path=/alertmanager
-    image: prom/alertmanager:v0.24.0
+    image: prom/alertmanager:v0.26.0
     restart: always
     volumes:
       - ./alertmanager/config.yaml:/etc/alertmanager/config.yaml
