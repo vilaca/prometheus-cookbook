@@ -86,7 +86,7 @@ services:
     depends_on:
       - prom-01
       - prom-02
-    image: quay.io/jacksontj/promxy:v0.0.75
+    image: quay.io/jacksontj/promxy:v0.0.84
     ports:
       - 8801:8082
     restart: always
